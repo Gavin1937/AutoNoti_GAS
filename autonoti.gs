@@ -16,6 +16,9 @@ var CONFIGURATION = {
     EMAIL_COLUMN: 0,       // which column is for email
     IS_ADMIN_COLUMN: 0     // which column is for is_admin
   },
+  NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in seconds
+  NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
+                           // Script will send notification in time range >= first and <= second 
   EMAIL_SUBJECT: "Email Subject for all emails"
 }
 
@@ -34,6 +37,12 @@ function autonoti() {
   var spapp = SpreadsheetApp.openByUrl(CONFIGURATION['SPREAD_SHEET_URL']);
   if (!spapp)
     throw Error("Cannot open spreadsheet url.");
+
+  // test for spamming
+  if (isSpamming(spapp)) {
+    Logger.log(`Spamming notification, blocked. Hour: ${today.getHours()}, Time Difference (ms): ${NOTI_TIME_DELTA}`);
+    return;
+  }
 
   // get admin info
   var admins = getAdminInfo(spapp);
@@ -205,5 +214,45 @@ function sendEmail(to_email, email_subject, html_message) {
     htmlBody: html_message
   });
   return ma.getRemainingDailyQuota();
+}
+
+var NOTI_TIME_DELTA = 0;
+function isSpamming(spapp) {
+  var today = new Date();
+
+  var output = false;
+  var cache = spapp.getSheetByName("cache");
+  if (cache) {
+    var value = cache.getRange("!A1:B1").getValues();    
+    var time = new Date(value[0][1]);
+    NOTI_TIME_DELTA = today - time;
+
+    // our of range
+    if (today.getHours() < CONFIGURATION['NOTI_HOUR_RANGE'][0] && today.getHours() > CONFIGURATION['NOTI_HOUR_RANGE'])
+      output = true;
+    else if ((NOTI_TIME_DELTA/1000) <= CONFIGURATION['NOTI_MIN_INTERVAL'])
+      output = true;
+  }
+  else { // do not have cache sheet, create one
+    Logger.log("cache sheet does not exists, create one.")
+    NOTI_TIME_DELTA = -1;
+    try {
+      cache = spapp.insertSheet();
+      cache.setName("cache");
+      cache.getRange("A1").setValue("last_noti_time");
+      output = false;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // update cache sheet
+  try {
+    cache.getRange("B1").setValue(today.getTime());
+  } catch (err) {
+    throw err;
+  }
+
+  return output;  
 }
 

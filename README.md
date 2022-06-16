@@ -138,6 +138,9 @@ After your finish setting up both Data SpreadSheet and template Google Docs, you
        EMAIL_COLUMN: 0,       // which column is for email
        IS_ADMIN_COLUMN: 0     // which column is for is_admin
      },
+     NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in seconds
+     NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
+                              // Script will send notification in time range >= first and <= second 
      EMAIL_SUBJECT: "Email Subject for all emails"
    }
 ```
@@ -156,5 +159,21 @@ After your finish setting up both Data SpreadSheet and template Google Docs, you
 ### Testing
 
 I suggest you set the script trigger to run at a short time first, so you can test your project. If everything works fine, you can change the trigger to what you want.
+
+## Features
+
+### Spam Guard
+
+To avoid message spamming, the script has Spam Guard.
+
+The Script will use ```NOTI_MIN_INTERVAL``` and ```NOTI_HOUR_RANGE``` parameters in ```CONFIGURATION``` for Spam Guard.
+
+Notifications can only be send if notification interval is $\ge$ ```NOTI_MIN_INTERVAL``` and current time hour is between ```NOTI_HOUR_RANGE```
+
+In order for Spam Guard to work, the script need to store some cache data. These data will be store in Sheet **cache** in your Data SpreadSheet.
+
+Sheet **cache** will be automatically creat by the script, **DO NOT EDIT OR DELETE THIS SHEET**.
+
+
 
 
