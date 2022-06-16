@@ -15,7 +15,7 @@ var CONFIGURATION = {
     EMAIL_COLUMN: 0,
     IS_ADMIN_COLUMN: 0
   },
-  EMAIL_SUBJECT: "EMail Subject for all emails"
+  EMAIL_SUBJECT: "Email Subject for all emails"
 }
 
 function autonoti() {
@@ -121,8 +121,8 @@ function parseMessage(msg, sermon_name, worship_name) {
   msg_keywords = {
     'sermon_name': sermon_name,
     'worship_name': worship_name,
-    'admin_name': CONFIGURATION['ADMINS'][1],
-    'admin_email': CONFIGURATION['ADMINS'][2]
+    'admin_name': CONFIGURATION['ADMINS'][0][1],
+    'admin_email': CONFIGURATION['ADMINS'][0][2]
   };
 
   match = [...msg.matchAll(/\${([a-zA-Z_]+)}/g)];
