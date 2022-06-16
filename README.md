@@ -14,6 +14,17 @@
 
 * basic knowledge of JavaScript
 
+## Google Apps Script Required Permissions
+
+* See, edit, create, and delete all your Google Docs documents
+  * For reading Google Doc email templates
+* See, edit, create, and delete all your Google Sheets spreadsheets
+  * For reading Data SpreadSheet
+* Connect to an external service
+  * For parsing Google Doc text into html
+* Send email as you
+  * For sending notification emails
+
 ## Setup
 
 1. Open Browser and go to your Google Drive.
@@ -132,9 +143,15 @@ After your finish setting up both Data SpreadSheet and template Google Docs, you
 ```
 
 6. Click on **Run** button to test the script
+   * When you click on **Run** button, Google will ask your to sign in first, and then this script will ask you for some permissions (Check out [Google Apps Script Required Permissions](#google-apps-script-required-permissions) for more detail)
+   * Choose an account to sign in
+   * Google may give a **Google hasn’t verified this app** warning message, just click **Advanced** and then **Go to your project name(unsafe)** 
+   * After you reviewed all the permissions, click **Allow**.
+   * You only need to do this once.
+
 
 7. Finally, go to **Triggers** tab on the left side and add a trigger for your project
-   * you can set when does script runs after your click **Add Trigger** button.
+   * you can set when does script run after your click **Add Trigger** button.
 
 ### Testing
 
