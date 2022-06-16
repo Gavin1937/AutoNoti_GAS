@@ -2,6 +2,19 @@
 
 var CONFIGURATION = {
   SPREAD_SHEET_URL: "URL to Google SpreadSheet",
+  SCHEDULE_SHEET: {
+    RANGE: "!A:A",
+    DATE_COLUMN: 0,
+    SERMON_COLUMN: 0,
+    WORSHIP_COLUMN: 0
+  },
+  CONTACT_SHEET: {
+    RANGE: "!A:A",
+    NAME_COLUMN: 0,
+    REFER_NAME_COLUMN: 0,
+    EMAIL_COLUMN: 0,
+    IS_ADMIN_COLUMN: 0
+  },
   EMAIL_SUBJECT: "EMail Subject for all emails"
 }
 
@@ -9,7 +22,7 @@ function autonoti() {
 
   // init check
   for (key in CONFIGURATION) {
-    if (typeof CONFIGURATION[key] != 'string' || CONFIGURATION[key].length <= 0)
+    if (typeof CONFIGURATION[key] == 'string' && CONFIGURATION[key].length <= 0)
       throw Error("Missing configuration constants.");
   }
 
@@ -26,8 +39,9 @@ function autonoti() {
   CONFIGURATION['ADMINS'] = admins;
   var tmpstr = "Admins: [";
   for (a of admins)
-    tmpstr += a[0] + ", ";
-  tmpstr.substr(0, tmpstr.length-2) += "]";
+    tmpstr += a[CONFIGURATION['CONTACT_SHEET']['NAME_COLUMN']] + ", ";
+  tmpstr = tmpstr.substr(0, tmpstr.length-2);
+  tmpstr += "]";
   Logger.log(tmpstr);
 
   // get current sermon_info & worship_info
@@ -122,23 +136,26 @@ function parseMessage(msg, sermon_name, worship_name) {
 function getWklyPeople(spapp) {
   var today = new Date();
   var sheet = spapp.getSheetByName("Schedule");
-  var values = sheet.getRange("!A:E").getValues();
+  var values = sheet.getRange(CONFIGURATION['SCHEDULE_SHEET']['RANGE']).getValues();
   var date = new Date(0);
+  var date_col = CONFIGURATION['SCHEDULE_SHEET']['DATE_COLUMN'];
+  var serm_col = CONFIGURATION['SCHEDULE_SHEET']['SERMON_COLUMN'];
+  var wors_col = CONFIGURATION['SCHEDULE_SHEET']['WORSHIP_COLUMN'];
   for (v of values) {
     if (typeof v[0] == 'string' && v[0].includes("year=")) {
       date.setYear(v[0].substr(5, 4))
       date.setMonth(1);
       date.setDate(1);
     }
-    else if (v[0] instanceof Date) {
-      date.setMonth(v[0].getMonth());
-      date.setDate(v[0].getDate());
+    else if (v[date_col] instanceof Date) {
+      date.setMonth(v[date_col].getMonth());
+      date.setDate(v[date_col].getDate());
       date.setHours(0);
       date.setMinutes(0);
       date.setSeconds(0);
     }
     if (date >= today) {
-      return [date, v[3], v[4]];
+      return [date, v[serm_col], v[wors_col]];
     }
   }
   return null;
@@ -146,9 +163,9 @@ function getWklyPeople(spapp) {
 
 function getContactInfo(spapp, name) {
   var sheet = spapp.getSheetByName("Contact");
-  var values = sheet.getRange("!A2:D").getValues();
+  var values = sheet.getRange(CONFIGURATION['CONTACT_SHEET']['RANGE']).getValues();
   for (v of values) {
-    if (v[0] == name)
+    if (v[CONFIGURATION['CONTACT_SHEET']['NAME_COLUMN']] == name)
       return v;
   }
   return null;
@@ -156,10 +173,10 @@ function getContactInfo(spapp, name) {
 
 function getAdminInfo(spapp) {
   var sheet = spapp.getSheetByName("Contact");
-  var values = sheet.getRange("!A2:D").getValues();
+  var values = sheet.getRange(CONFIGURATION['CONTACT_SHEET']['RANGE']).getValues();
   var output = [];
   for (v of values) {
-    if (v[3] > 0)
+    if (v[CONFIGURATION['CONTACT_SHEET']['IS_ADMIN_COLUMN']] > 0)
       output.push(v);
   }
   return output;
