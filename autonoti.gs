@@ -142,6 +142,13 @@ function getHtmlByDocId(id) {
     muteHttpExceptions:true,
   };
   var html = UrlFetchApp.fetch(url,param).getContentText();
+  
+  // beautify html a bit
+  html = html.replaceAll('<p class="c1"><span class="c0"></span></p>', "<br>");
+  var start = html.search("<body");
+  var end = html.search("</body>");
+  html = html.substr(start, (end-start+7));
+
   return html;
 }
 
