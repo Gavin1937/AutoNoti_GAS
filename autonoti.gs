@@ -70,10 +70,11 @@ function autonoti() {
   }
 
   // send email to all
+  var left_quota = -1;
 
   // sermon
   if (sermon_info && sermon_msg) {
-    sendEmail(
+    left_quota = sendEmail(
       sermon_info[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       sermon_msg
@@ -82,7 +83,7 @@ function autonoti() {
   
   // worship
   if (worship_info && worship_msg) {
-    sendEmail(
+    left_quota = sendEmail(
       worship_info[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       worship_msg
@@ -91,12 +92,14 @@ function autonoti() {
 
   // admin
   for (a of admins) {
-    sendEmail(
+    left_quota = sendEmail(
       a[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       "sermon msg:<br>" + sermon_msg + "<br>worship msg<br>" + worship_msg
     );
   }
+
+  Logger.log(`GMail left quota = ${left_quota}`)
 
 }
 
