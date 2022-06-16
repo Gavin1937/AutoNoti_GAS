@@ -1,19 +1,20 @@
 
 
+// All the columns are counting start from 0 instead of 1 
 var CONFIGURATION = {
   SPREAD_SHEET_URL: "URL to Google SpreadSheet",
   SCHEDULE_SHEET: {
-    RANGE: "!A:A",
-    DATE_COLUMN: 0,
-    SERMON_COLUMN: 0,
-    WORSHIP_COLUMN: 0
+    RANGE: "!A:A",         // select range of Schedule Sheet
+    DATE_COLUMN: 0,        // which column is for Date
+    SERMON_COLUMN: 0,      // which column is for Sermon Person
+    WORSHIP_COLUMN: 0      // which column is for Worship Person
   },
   CONTACT_SHEET: {
-    RANGE: "!A:A",
-    NAME_COLUMN: 0,
-    REFER_NAME_COLUMN: 0,
-    EMAIL_COLUMN: 0,
-    IS_ADMIN_COLUMN: 0
+    RANGE: "!A:A",         // select range of Contact Sheet
+    NAME_COLUMN: 0,        // which column is for name
+    REFER_NAME_COLUMN: 0,  // which column is for refer_name
+    EMAIL_COLUMN: 0,       // which column is for email
+    IS_ADMIN_COLUMN: 0     // which column is for is_admin
   },
   EMAIL_SUBJECT: "Email Subject for all emails"
 }
@@ -55,28 +56,38 @@ function autonoti() {
 
   // generate sermon & worship msg
   var msg_tmplt_url = spapp.getSheetByName("MessagesTemplate").getRange("!A1:B2").getValues();
-  var sermon_url = msg_tmplt_url[0][1];
-  var worship_url = msg_tmplt_url[1][1];
-  var sermon_id = DocumentApp.openByUrl(sermon_url).getId();
-  var worship_id = DocumentApp.openByUrl(worship_url).getId();
-  var sermon_msg = parseMessage(getHtmlByDocId(sermon_id), sermon_info[1], worship_info[1]);
-  var worship_msg = parseMessage(getHtmlByDocId(worship_id), sermon_info[1], worship_info[1]);
+  var sermon_msg = null;
+  var worship_msg = null;
+  if (sermon_info) {
+    var sermon_url = msg_tmplt_url[0][1];
+    var sermon_id = DocumentApp.openByUrl(sermon_url).getId();
+    sermon_msg = parseMessage(getHtmlByDocId(sermon_id), sermon_info[1], worship_info[1]);
+  }
+  if (worship_info) {
+    var worship_url = msg_tmplt_url[1][1];
+    var worship_id = DocumentApp.openByUrl(worship_url).getId();
+    worship_msg = parseMessage(getHtmlByDocId(worship_id), sermon_info[1], worship_info[1]);
+  }
 
   // send email to all
 
   // sermon
-  sendEmail(
-    sermon_info[2],
-    CONFIGURATION['EMAIL_SUBJECT'],
-    sermon_msg
-  );
+  if (sermon_info && sermon_msg) {
+    sendEmail(
+      sermon_info[2],
+      CONFIGURATION['EMAIL_SUBJECT'],
+      sermon_msg
+    );
+  }
   
   // worship
-  sendEmail(
-    worship_info[2],
-    CONFIGURATION['EMAIL_SUBJECT'],
-    worship_msg
-  );
+  if (worship_info && worship_msg) {
+    sendEmail(
+      worship_info[2],
+      CONFIGURATION['EMAIL_SUBJECT'],
+      worship_msg
+    );
+  }
 
   // admin
   for (a of admins) {
