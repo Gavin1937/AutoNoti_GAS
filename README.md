@@ -19,7 +19,7 @@
 * See, edit, create, and delete all your Google Docs documents
   * For reading Google Doc email templates
 * See, edit, create, and delete all your Google Sheets spreadsheets
-  * For reading Data SpreadSheet
+  * For reading Data SpreadSheet & writing cache data
 * Connect to an external service
   * For parsing Google Doc text into html
 * Send email as you
