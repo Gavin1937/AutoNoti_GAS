@@ -99,7 +99,7 @@ function autonoti() {
     );
   }
 
-  Logger.log(`GMail left quota = ${left_quota}`)
+  Logger.log(`Gmail left quota = ${left_quota}`)
 
 }
 
