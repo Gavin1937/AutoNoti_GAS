@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.06.16.v02
+  Version: 2022.06.16.v03
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -45,7 +45,7 @@ function autonoti() {
 
   // test for spamming
   if (isSpamming(spapp)) {
-    Logger.log(`Spamming notification, blocked. Hour: ${today.getHours()}, Time Difference (ms): ${NOTI_TIME_DELTA}`);
+    Logger.log(`Spamming notification, blocked. Time: ${getDateString(today)}, Time Difference (ms): ${NOTI_TIME_DELTA}`);
     return;
   }
 
@@ -148,7 +148,7 @@ function getHtmlByDocId(id) {
   var html = UrlFetchApp.fetch(url,param).getContentText();
 
   // beautify html a bit
-  html = html.replaceAll(/<p class=\"c\d\"><span class=\"c\d\"><\/span>/g, "<br>");
+  html = html.replaceAll(/<p class=\"[c0-9\ ]+\"><span class=\"[c0-9\ ]+\"><\/span>/g, "<br>");
   var start = html.search("<body");
   var end = html.search("</body>");
   html = html.substr(start, (end-start+7));
@@ -244,13 +244,21 @@ function sendEmail(spapp, to_email, email_subject, html_message) {
   return MailApp.getRemainingDailyQuota();
 }
 
-var NOTI_TIME_DELTA = 0;
+var NOTI_TIME_DELTA = -1;
 function isSpamming(spapp) {
   var today = new Date();
   var cache = spapp.getSheetByName("cache");
 
   // hour out of range
-  if (today.getHours() < CONFIGURATION['NOTI_HOUR_RANGE'][0] && today.getHours() > CONFIGURATION['NOTI_HOUR_RANGE'])
+  var lhour = new Date(
+    today.getFullYear(), today.getMonth(), today.getDate(),
+    CONFIGURATION['NOTI_HOUR_RANGE'][0], 0, 0
+  );
+  var uhour = new Date(
+    today.getFullYear(), today.getMonth(), today.getDate(),
+    CONFIGURATION['NOTI_HOUR_RANGE'][1], 0, 0
+  );
+  if (today < lhour || today > uhour)
     return true;
   
   // have cache sheet, check interval
@@ -275,7 +283,7 @@ function isSpamming(spapp) {
       throw err;
     }
   }
-
+  
   return false;
 }
 
