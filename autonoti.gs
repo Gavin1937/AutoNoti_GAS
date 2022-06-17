@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.06.16.v01
+  Version: 2022.06.16.v02
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -65,8 +65,8 @@ function autonoti() {
     throw Error("Cannot find weekly people.");
   var sermon_info = getContactInfo(spapp, cur_ppl[1]);
   var worship_info = getContactInfo(spapp, cur_ppl[2]);
-  Logger.log(`sermon_info = ${sermon_info}`);
-  Logger.log(`worship_info = ${worship_info}`);
+  Logger.log(`sermon_info = [${sermon_info}]`);
+  Logger.log(`worship_info = [${worship_info}]`);
 
   // generate sermon & worship msg
   var msg_tmplt_url = spapp.getSheetByName("MessagesTemplate").getRange("!A1:B2").getValues();
@@ -89,6 +89,7 @@ function autonoti() {
   // sermon
   if (sermon_info && sermon_msg) {
     left_quota = sendEmail(
+      spapp,
       sermon_info[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       sermon_msg
@@ -98,6 +99,7 @@ function autonoti() {
   // worship
   if (worship_info && worship_msg) {
     left_quota = sendEmail(
+      spapp,
       worship_info[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       worship_msg
@@ -107,6 +109,7 @@ function autonoti() {
   // admin
   for (a of admins) {
     left_quota = sendEmail(
+      spapp,
       a[2],
       CONFIGURATION['EMAIL_SUBJECT'],
       "sermon msg:<br>" + sermon_msg + "<br>worship msg<br>" + worship_msg
@@ -134,6 +137,7 @@ function getDateString(date) {
 }
 
 function getHtmlByDocId(id) {
+  // fetch html content from google doc
   var url = "https://docs.google.com/feeds/download/documents/export/Export?id="+id+"&exportFormat=html";
   var param = 
   {
@@ -142,9 +146,9 @@ function getHtmlByDocId(id) {
     muteHttpExceptions:true,
   };
   var html = UrlFetchApp.fetch(url,param).getContentText();
-  
+
   // beautify html a bit
-  html = html.replaceAll('<p class="c1"><span class="c0"></span></p>', "<br>");
+  html = html.replaceAll(/<p class=\"c\d\"><span class=\"c\d\"><\/span>/g, "<br>");
   var start = html.search("<body");
   var end = html.search("</body>");
   html = html.substr(start, (end-start+7));
@@ -162,8 +166,10 @@ function parseMessage(msg, sermon_name, worship_name) {
 
   match = [...msg.matchAll(/\${([a-zA-Z_]+)}/g)];
   for (m of match) {
-    replacement = msg_keywords[m[1]];
-    msg = msg.replace(m[0], replacement);
+    if (m[1] in msg_keywords) {
+      replacement = msg_keywords[m[1]];
+      msg = msg.replace(m[0], replacement);
+    }
   }
   return msg;
 }
@@ -217,54 +223,59 @@ function getAdminInfo(spapp) {
   return output;
 }
 
-function sendEmail(to_email, email_subject, html_message) {
-  Logger.log(`Send Email To ${to_email}, At [${getDateString(new Date())}]`);
-  var ma = MailApp;
-  ma.sendEmail({
+function sendEmail(spapp, to_email, email_subject, html_message) {
+  var today = new Date();
+  Logger.log(`Send Email To ${to_email}, At [${getDateString(today)}]`);
+  
+  MailApp.sendEmail({
     to: to_email,
     subject: email_subject,
     htmlBody: html_message
   });
-  return ma.getRemainingDailyQuota();
+  
+  // update cache sheet
+  var cache = spapp.getSheetByName("cache");
+  try {
+    cache.getRange("B1").setValue(today.getTime());
+  } catch (err) {
+    throw err;
+  }
+  
+  return MailApp.getRemainingDailyQuota();
 }
 
 var NOTI_TIME_DELTA = 0;
 function isSpamming(spapp) {
   var today = new Date();
-
-  var output = false;
   var cache = spapp.getSheetByName("cache");
+
+  // hour out of range
+  if (today.getHours() < CONFIGURATION['NOTI_HOUR_RANGE'][0] && today.getHours() > CONFIGURATION['NOTI_HOUR_RANGE'])
+    return true;
+  
+  // have cache sheet, check interval
   if (cache) {
     var value = cache.getRange("!A1:B1").getValues();    
     var time = new Date(value[0][1]);
     NOTI_TIME_DELTA = today - time;
 
-    // our of range
-    if (today.getHours() < CONFIGURATION['NOTI_HOUR_RANGE'][0] && today.getHours() > CONFIGURATION['NOTI_HOUR_RANGE'])
-      output = true;
-    else if ((NOTI_TIME_DELTA/1000) <= CONFIGURATION['NOTI_MIN_INTERVAL'])
-      output = true;
+    // interval too short
+    if ((NOTI_TIME_DELTA/1000) <= CONFIGURATION['NOTI_MIN_INTERVAL'])
+      return true;
   }
-  else { // do not have cache sheet, create one
+  // do not have cache sheet, create one
+  else {
     Logger.log("cache sheet does not exists, create one.")
     NOTI_TIME_DELTA = -1;
     try {
       cache = spapp.insertSheet();
       cache.setName("cache");
       cache.getRange("A1").setValue("last_noti_time");
-      output = false;
     } catch (err) {
       throw err;
     }
   }
 
-  // update cache sheet
-  try {
-    cache.getRange("B1").setValue(today.getTime());
-  } catch (err) {
-    throw err;
-  }
-
-  return output;  
+  return false;
 }
 
