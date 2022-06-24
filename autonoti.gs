@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.06.21.v01
+  Version: 2022.06.23.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -21,7 +21,7 @@ var CONFIGURATION = {
     EMAIL_COLUMN: 0,       // which column is for email
     IS_ADMIN_COLUMN: 0     // which column is for is_admin
   },
-  NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in seconds
+  NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in weeks
   NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
                            // Script will send notification in time range >= first and <= second 
   EMAIL_SUBJECT: "Email Subject for all emails"
@@ -45,8 +45,11 @@ function autonoti() {
 
   // test for spamming
   if (isSpamming(spapp)) {
-    Logger.log(`Spamming notification, blocked. Time: ${getDateString(today)}, Time Difference (ms): ${NOTI_TIME_DELTA}`);
+    Logger.log(`Spamming notification, blocked. Time: ${getDateString(today)}, Week Difference: ${NOTI_TIME_DELTA}`);
     return;
+  }
+  else {
+    Logger.log(`Not Spamming. Time: ${getDateString(today)}, Week Difference: ${NOTI_TIME_DELTA}`);
   }
 
   // get admin info
@@ -244,6 +247,13 @@ function sendEmail(spapp, to_email, email_subject, html_message) {
   return MailApp.getRemainingDailyQuota();
 }
 
+function weekOfYear(date) {
+  var oneJan = new Date(date.getFullYear(),0,1);
+  var numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
+  var result = Math.ceil(( date.getDay() + 1 + numberOfDays) / 7);
+  return result;
+}
+
 var NOTI_TIME_DELTA = -1;
 function isSpamming(spapp) {
   var today = new Date();
@@ -265,10 +275,10 @@ function isSpamming(spapp) {
   if (cache) {
     var value = cache.getRange("!A1:B1").getValues();    
     var time = new Date(value[0][1]);
-    NOTI_TIME_DELTA = today - time;
+    NOTI_TIME_DELTA = weekOfYear(today) - weekOfYear(time);
 
-    // interval too short
-    if ((NOTI_TIME_DELTA/1000) <= CONFIGURATION['NOTI_MIN_INTERVAL'])
+    // interval too short, must wait for enough weeks
+    if (NOTI_TIME_DELTA < CONFIGURATION['NOTI_MIN_INTERVAL'])
       return true;
   }
   // do not have cache sheet, create one
