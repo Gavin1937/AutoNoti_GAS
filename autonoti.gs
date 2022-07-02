@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.06.23.v01
+  Version: 2022.07.01.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
