@@ -115,7 +115,7 @@ function autonoti() {
       spapp,
       a[2],
       CONFIGURATION['EMAIL_SUBJECT'],
-      "sermon msg:<br>" + sermon_msg + "<br>worship msg<br>" + worship_msg
+      "sermon msg:<br>" + sermon_msg + "<br>worship msg:<br>" + worship_msg
     );
   }
 
