@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.12.29.v01
+  Version: 2022.12.29.v02
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -258,10 +258,54 @@ function sendEmail(spapp, to_email, email_subject, html_message) {
   return MailApp.getRemainingDailyQuota();
 }
 
-function weekOfYear(date) {
-  var JanFirst = new Date(date.getFullYear(),0,1);
-  var numberOfDaysInBetween = Math.floor((date - JanFirst) / (24 * 60 * 60 * 1000));
-  var result = Math.ceil(( date.getDay() + 1 + numberOfDaysInBetween) / 7);
+function weeksInBetween(early, late) {
+  function getWeekNumber(d) {
+    // Copy date so don't modify original
+    d = new Date(+d);
+    d.setHours(0, 0, 0, 0);
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    // Get first day of year
+    var yearStart = new Date(d.getFullYear(), 0, 1);
+    // Calculate full weeks to nearest Thursday
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+    // Return array of year and week number
+    return [d.getFullYear(), weekNo];
+  }
+  
+  function weeksInYear(year) {
+    var month = 11,
+      day = 31,
+      week;
+    
+    // Find week that 31 Dec is in. If is first week, reduce date until
+    // get previous week.
+    do {
+      d = new Date(year, month, day--);
+      week = getWeekNumber(d)[1];
+    } while (week == 1);
+  
+    return week;
+  }
+  
+  var result = -1;
+  var early_list = getWeekNumber(early);
+  var late_list = getWeekNumber(late);
+  // early to late crossed a new year
+  if (late_list[0] - early_list[0] > 0) {
+    var early_wknumber = weeksInYear(early_list[0]);
+    result = (late_list[1] - early_list[1] + early_wknumber);
+  }
+  // early & late in the same year
+  else if (late_list[0] - early_list[0] === 0) {
+    result = (late_list[1] - early_list[1]);
+  }
+  // error, maybe early date is greater than late date
+  else {
+    return -1;
+  }
+  
   return result;
 }
 
@@ -286,7 +330,7 @@ function isSpamming(spapp) {
   if (cache) {
     var value = cache.getRange("!A1:B1").getValues();    
     var time = new Date(value[0][1]);
-    NOTI_TIME_DELTA = weekOfYear(today) - weekOfYear(time);
+    NOTI_TIME_DELTA = weeksInBetween(time, today);
 
     // interval too short, must wait for enough weeks
     if (NOTI_TIME_DELTA < CONFIGURATION['NOTI_MIN_INTERVAL'])
@@ -319,7 +363,7 @@ function isSpamming(spapp) {
     .filter( j => Number.isInteger(j) && j >= 0 && j <= 6 )
   ;
   // if today is not specified in 'NOTI_AT_WKDAYS'
-  if (!(today.getDay() in target_wkdays)) {
+  if (!(target_wkdays.includes(today.getDay()))) {
     return true;
   }
   
