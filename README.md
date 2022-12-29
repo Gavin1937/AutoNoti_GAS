@@ -139,6 +139,8 @@ After your finish setting up both Data SpreadSheet and template Google Docs, you
        IS_ADMIN_COLUMN: 0     // which column is for is_admin
      },
      NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in weeks
+     NOTI_AT_WKDAYS: ["MON"], // send notification at specific weekdays, this is a list.
+                              // ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
      NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
                               // Script will send notification in time range >= first and <= second 
      EMAIL_SUBJECT: "Email Subject for all emails"

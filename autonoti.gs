@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.07.01.v01
+  Version: 2022.12.29.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -22,6 +22,8 @@ var CONFIGURATION = {
     IS_ADMIN_COLUMN: 0     // which column is for is_admin
   },
   NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in weeks
+  NOTI_AT_WKDAYS: ["MON"], // send notification at specific weekdays, this is a list.
+                           // ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
   NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
                            // Script will send notification in time range >= first and <= second 
   EMAIL_SUBJECT: "Email Subject for all emails"
@@ -68,6 +70,8 @@ function autonoti() {
     throw Error("Cannot find weekly people.");
   var sermon_info = getContactInfo(spapp, cur_ppl[1]);
   var worship_info = getContactInfo(spapp, cur_ppl[2]);
+  if (sermon_info === [,,,] && worship_info === [,,,])
+    throw Error("Cannot find weekly people.");
   Logger.log(`sermon_info = [${sermon_info}]`);
   Logger.log(`worship_info = [${worship_info}]`);
 
@@ -186,20 +190,27 @@ function getWklyPeople(spapp) {
   var serm_col = CONFIGURATION['SCHEDULE_SHEET']['SERMON_COLUMN'];
   var wors_col = CONFIGURATION['SCHEDULE_SHEET']['WORSHIP_COLUMN'];
   for (v of values) {
+    // looking for year indicator first
     if (typeof v[0] == 'string' && v[0].includes("year=")) {
       date.setYear(v[0].substr(5, 4))
-      date.setMonth(1);
+      date.setMonth(0);
       date.setDate(1);
     }
+    // skip all rows from previous year
+    if (date.getFullYear() < today.getFullYear()) {
+      continue;
+    }
+    // once is on current/next year, looking for month & date
     else if (v[date_col] instanceof Date) {
       date.setMonth(v[date_col].getMonth());
       date.setDate(v[date_col].getDate());
       date.setHours(0);
       date.setMinutes(0);
       date.setSeconds(0);
-    }
-    if (date >= today) {
-      return [date, v[serm_col], v[wors_col]];
+      // check valid date & return it
+      if (date >= today) {
+        return [date, v[serm_col], v[wors_col]];
+      }
     }
   }
   return null;
@@ -248,9 +259,9 @@ function sendEmail(spapp, to_email, email_subject, html_message) {
 }
 
 function weekOfYear(date) {
-  var oneJan = new Date(date.getFullYear(),0,1);
-  var numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
-  var result = Math.ceil(( date.getDay() + 1 + numberOfDays) / 7);
+  var JanFirst = new Date(date.getFullYear(),0,1);
+  var numberOfDaysInBetween = Math.floor((date - JanFirst) / (24 * 60 * 60 * 1000));
+  var result = Math.ceil(( date.getDay() + 1 + numberOfDaysInBetween) / 7);
   return result;
 }
 
@@ -294,6 +305,25 @@ function isSpamming(spapp) {
     }
   }
   
+  // check for specified weekday
+  // whether today's weekday is specified
+  // in one of the element in 'NOTI_AT_WKDAYS'
+  var wkday_map = {
+    "MON":1, "TUE":2,
+    "WED":3, "THU":4,
+    "FRI":5, "SAT":6,
+    "SUN":0
+  };
+  var target_wkdays = CONFIGURATION['NOTI_AT_WKDAYS']
+    .map( i => wkday_map[i.toUpperCase()] )
+    .filter( j => Number.isInteger(j) && j >= 0 && j <= 6 )
+  ;
+  // if today is not specified in 'NOTI_AT_WKDAYS'
+  if (!(today.getDay() in target_wkdays)) {
+    return true;
+  }
+  
+  // not spamming if pass all tests above
   return false;
 }
 
