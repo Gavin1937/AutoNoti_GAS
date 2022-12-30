@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.12.29.v04
+  Version: 2022.12.29.v05
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -331,7 +331,7 @@ function isSpamming(spapp) {
   
   // have cache sheet, check interval
   if (cache) {
-    var value = cache.getRange("!A1:B1").getValues();    
+    var value = cache.getRange("!A2:B2").getValues();    
     var time = new Date(value[0][1]);
     NOTI_TIME_DELTA = weeksInBetween(time, today);
 
