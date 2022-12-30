@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.12.29.v02
+  Version: 2022.12.29.v03
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -21,7 +21,7 @@ var CONFIGURATION = {
     EMAIL_COLUMN: 0,       // which column is for email
     IS_ADMIN_COLUMN: 0     // which column is for is_admin
   },
-  NOTI_MIN_INTERVAL: 0,    // minimum time inteval of notification, in weeks
+  NOTI_MIN_INTERVAL: 0,    // minimum interval in weeks between two notifications
   NOTI_AT_WKDAYS: ["MON"], // send notification at specific weekdays, this is a list.
                            // ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
   NOTI_HOUR_RANGE: [0, 0], // notification hour range of a day. (0-23)
@@ -289,22 +289,25 @@ function weeksInBetween(early, late) {
     return week;
   }
   
-  var result = -1;
-  var early_list = getWeekNumber(early);
-  var late_list = getWeekNumber(late);
-  // early to late crossed a new year
-  if (late_list[0] - early_list[0] > 0) {
-    var early_wknumber = weeksInYear(early_list[0]);
-    result = (late_list[1] - early_list[1] + early_wknumber);
-  }
-  // early & late in the same year
-  else if (late_list[0] - early_list[0] === 0) {
-    result = (late_list[1] - early_list[1]);
-  }
-  // error, maybe early date is greater than late date
-  else {
+  // error, early date is greater than late date
+  if (early > late) {
     return -1;
   }
+  
+  // calc weeks between early & late
+  var result = 0;
+  var early_list = getWeekNumber(early);
+  var late_list = getWeekNumber(late);
+  var year_e = early_list[0];
+  var week_e = early_list[1];
+  var year_l = late_list[0];
+  var week_l = late_list[1];
+  // handle year difference
+  while (year_e < year_l) {
+    result += weeksInYear(year_e);
+    year_e += 1;
+  }
+  result += (week_l - week_e);
   
   return result;
 }

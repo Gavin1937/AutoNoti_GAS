@@ -166,22 +166,37 @@ I suggest you set the script trigger to run at a short time first, so you can te
 
 ### Spam Guard
 
-To avoid message spamming, the script has Spam Guard.
+To avoid message spamming, the script has a Spam Guard.
 
-The Script will use ```NOTI_MIN_INTERVAL``` and ```NOTI_HOUR_RANGE``` parameters in ```CONFIGURATION``` for Spam Guard.
+The Script will use `NOTI_MIN_INTERVAL`, `NOTI_AT_WKDAYS`, and `NOTI_HOUR_RANGE` parameters in `CONFIGURATION` for Spam Guard.
 
-Notifications can only be send if notification interval is $\ge$ ```NOTI_MIN_INTERVAL``` and current time hour is between ```NOTI_HOUR_RANGE```
+* `NOTI_MIN_INTERVAL`:
+  * minimum interval in weeks between two notifications
+  * for example:
+    * if `NOTI_MIN_INTERVAL` set to 1
+      * `first notification` was sent at week 1 Thursday
+      * `second notification` will be send after week 2 Monday 00 AM
+      * week number changes between two notification, and this week number delta is $\ge$ `NOTI_MIN_INTERVAL`
+    * if `NOTI_MIN_INTERVAL` set to 0
+      * then two notifications can be send in the same week at different date.
+      * you should use this with `NOTI_AT_WKDAYS`
+* `NOTI_AT_WKDAYS`:
+  * send notification at specified weekdays
+  * this is a list of string to specify weekdays, ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+  * if you want to send multiple notifications in the same week, you should set `NOTI_MIN_INTERVAL` to 0
+  * for example:
+    * if `NOTI_MIN_INTERVAL` set to 0 and `NOTI_AT_WKDAYS` set to ["MON", "TUE"]
+      * this script will send a notification on Monday and Tuesday every week
+* `NOTI_HOUR_RANGE`:
+  * notification hour range of a day. (0-23)
+  * this parameter will be applied on specified weekday
+  * this is a list of two integers [first, second]
+  * script will send notification in time range `>= first` and `<= second`
+  * for example:
+    * if `NOTI_MIN_INTERVAL` set to 0, `NOTI_AT_WKDAYS` set to ["MON", "TUE"], and `NOTI_HOUR_RANGE` set to [9, 20]
+      * this script will send a notification on Monday and Tuesday between 9 AM to 20 PM every week
 
-**Note that ```NOTI_MIN_INTERVAL``` represents the minimum number of weeks before next notification can be sent.**
+In order for Spam Guard to work, this script needs to store some cache data. These data will be store in Sheet **cache** in your Data SpreadSheet.
 
-If ```NOTI_MIN_INTERVAL``` set to 1, then no notification can be sent before next monday.
-
-If ```NOTI_MIN_INTERVAL``` set to 0, then there is no interval between notifications.
-
-In order for Spam Guard to work, the script need to store some cache data. These data will be store in Sheet **cache** in your Data SpreadSheet.
-
-Sheet **cache** will be automatically creat by the script, **DO NOT EDIT OR DELETE THIS SHEET**.
-
-
-
+Sheet **cache** will be automatically create by the script, **DO NOT EDIT OR DELETE THIS SHEET**.
 
