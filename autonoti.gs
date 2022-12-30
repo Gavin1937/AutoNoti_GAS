@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.12.29.v03
+  Version: 2022.12.29.v04
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -250,7 +250,7 @@ function sendEmail(spapp, to_email, email_subject, html_message) {
   // update cache sheet
   var cache = spapp.getSheetByName("cache");
   try {
-    cache.getRange("B1").setValue(today.getTime());
+    cache.getRange("B2").setValue(today.getTime());
   } catch (err) {
     throw err;
   }
@@ -346,7 +346,8 @@ function isSpamming(spapp) {
     try {
       cache = spapp.insertSheet();
       cache.setName("cache");
-      cache.getRange("A1").setValue("last_noti_time");
+      cache.getRange("A1").setValue("This spreadsheet stores cache data for AutoNoti_GAS. Please DO NOT DELETE OR MODIFY THIS SPREADSHEET.");
+      cache.getRange("A2").setValue("last_noti_time");
     } catch (err) {
       throw err;
     }
