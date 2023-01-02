@@ -94,7 +94,7 @@ After your finish setting up your Data SpreadSheet, your need to set up notifica
 4. Template example:
 
 ```
-    Hello, ${sermon_name}, your are in charge of this week's sermon.
+    Hello, ${sermon_name}, you are in charge of this week's sermon.
     
     If you have any question, please contact ${admin_name}.
     
@@ -117,7 +117,7 @@ After your finish setting up both Data SpreadSheet and template Google Docs, you
    * rename project: click on the text beside "Apps Script" logo
    * rename file: click on the tree dot button from item on the left side "Files" tab
 
-4. Copy all the contents from **autonoto.gs** file and replace them into Apps Script editor.
+4. Copy all the contents from **autonoti.gs** file and replace them into Apps Script editor.
 
 5. Fill in the blank for **CONFIGURATION** variable on top of the script.
 
