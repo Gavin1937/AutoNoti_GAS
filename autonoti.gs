@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2022.12.29.v05
+  Version: 2023.03.06.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -70,7 +70,7 @@ function autonoti() {
     throw Error("Cannot find weekly people.");
   var sermon_info = getContactInfo(spapp, cur_ppl[1]);
   var worship_info = getContactInfo(spapp, cur_ppl[2]);
-  if (sermon_info === [,,,] && worship_info === [,,,])
+  if (isValidInfo(sermon_info) && isValidInfo(worship_info))
     throw Error("Cannot find weekly people.");
   Logger.log(`sermon_info = [${sermon_info}]`);
   Logger.log(`worship_info = [${worship_info}]`);
@@ -79,12 +79,12 @@ function autonoti() {
   var msg_tmplt_url = spapp.getSheetByName("MessagesTemplate").getRange("!A1:B2").getValues();
   var sermon_msg = null;
   var worship_msg = null;
-  if (sermon_info && sermon_info.length > 0 && sermon_info[0] != null) {
+  if (isValidInfo(sermon_info)) {
     var sermon_url = msg_tmplt_url[0][1];
     var sermon_id = DocumentApp.openByUrl(sermon_url).getId();
     sermon_msg = parseMessage(getHtmlByDocId(sermon_id), sermon_info[1], worship_info ? worship_info[1] : "");
   }
-  if (worship_info && worship_info.length > 0 && worship_info[0] != null) {
+  if (isValidInfo(worship_info)) {
     var worship_url = msg_tmplt_url[1][1];
     var worship_id = DocumentApp.openByUrl(worship_url).getId();
     worship_msg = parseMessage(getHtmlByDocId(worship_id), sermon_info ? sermon_info[1] : "", worship_info[1]);
@@ -141,6 +141,21 @@ function getDateString(date) {
         timeZoneName :'short'
       }
   );
+}
+
+function isValidInfo(info) {
+  try {
+    if (!info) return false;
+    if (info.length <= 0) return false;
+    for (i of info) {
+      if (!i) return false;
+      if (i.length <= 0) return false;
+    }
+  } catch (err) {
+    logger.log(`Exception in isValidInfo: ${err}`);
+    return false;
+  }
+  return true;
 }
 
 function getHtmlByDocId(id) {
