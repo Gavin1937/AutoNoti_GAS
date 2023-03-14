@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2023.03.06.v01
+  Version: 2023.03.13.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -30,21 +30,21 @@ var CONFIGURATION = {
 }
 
 function autonoti() {
-
+  
   // init check
   for (key in CONFIGURATION) {
     if (typeof CONFIGURATION[key] == 'string' && CONFIGURATION[key].length <= 0)
       throw Error("Missing configuration constants.");
   }
-
+  
   var today = new Date();
   Logger.log(`Start Apps Script At: [${getDateString(today)}]`)
-
+  
   // init SpreadsheetApp
   var spapp = SpreadsheetApp.openByUrl(CONFIGURATION['SPREAD_SHEET_URL']);
   if (!spapp)
     throw Error("Cannot open spreadsheet url.");
-
+  
   // test for spamming
   if (isSpamming(spapp)) {
     Logger.log(`Spamming notification, blocked. Time: ${getDateString(today)}, Week Difference: ${NOTI_TIME_DELTA}`);
@@ -53,7 +53,7 @@ function autonoti() {
   else {
     Logger.log(`Not Spamming. Time: ${getDateString(today)}, Week Difference: ${NOTI_TIME_DELTA}`);
   }
-
+  
   // get admin info
   var admins = getAdminInfo(spapp);
   CONFIGURATION['ADMINS'] = admins;
@@ -63,18 +63,18 @@ function autonoti() {
   tmpstr = tmpstr.substr(0, tmpstr.length-2);
   tmpstr += "]";
   Logger.log(tmpstr);
-
+  
   // get current sermon_info & worship_info
   var cur_ppl = getWklyPeople(spapp);
   if (!cur_ppl)
     throw Error("Cannot find weekly people.");
   var sermon_info = getContactInfo(spapp, cur_ppl[1]);
   var worship_info = getContactInfo(spapp, cur_ppl[2]);
-  if (isValidInfo(sermon_info) && isValidInfo(worship_info))
+  if (!isValidInfo(sermon_info) && !isValidInfo(worship_info))
     throw Error("Cannot find weekly people.");
   Logger.log(`sermon_info = [${sermon_info}]`);
   Logger.log(`worship_info = [${worship_info}]`);
-
+  
   // generate sermon & worship msg
   var msg_tmplt_url = spapp.getSheetByName("MessagesTemplate").getRange("!A1:B2").getValues();
   var sermon_msg = null;
@@ -89,10 +89,10 @@ function autonoti() {
     var worship_id = DocumentApp.openByUrl(worship_url).getId();
     worship_msg = parseMessage(getHtmlByDocId(worship_id), sermon_info ? sermon_info[1] : "", worship_info[1]);
   }
-
+  
   // send email to all
   var left_quota = -1;
-
+  
   // sermon
   if (sermon_info && sermon_msg) {
     left_quota = sendEmail(
@@ -101,6 +101,9 @@ function autonoti() {
       CONFIGURATION['EMAIL_SUBJECT'],
       sermon_msg
     );
+  }
+  else {
+    throw new Error(`Failed to send sermon email. (sermon_info=${sermon_info}, sermon_msg=${sermon_msg}`);
   }
   
   // worship
@@ -112,7 +115,10 @@ function autonoti() {
       worship_msg
     );
   }
-
+  else {
+    throw new Error(`Failed to send worship email. (worship_info=${worship_info}, worship_msg=${worship_msg}`);
+  }
+  
   // admin
   for (a of admins) {
     left_quota = sendEmail(
@@ -122,9 +128,9 @@ function autonoti() {
       "sermon msg:<br>" + sermon_msg + "<br>worship msg:<br>" + worship_msg
     );
   }
-
+  
   Logger.log(`Gmail left quota = ${left_quota}`)
-
+  
 }
 
 function getDateString(date) {
@@ -147,9 +153,9 @@ function isValidInfo(info) {
   try {
     if (!info) return false;
     if (info.length <= 0) return false;
-    for (i of info) {
-      if (!i) return false;
-      if (i.length <= 0) return false;
+    for (let i = 0; i < 3; ++i) {
+      if (!info[i]) return false;
+      if (info[i].length <= 0) return false;
     }
   } catch (err) {
     logger.log(`Exception in isValidInfo: ${err}`);
@@ -168,13 +174,13 @@ function getHtmlByDocId(id) {
     muteHttpExceptions:true,
   };
   var html = UrlFetchApp.fetch(url,param).getContentText();
-
+  
   // beautify html a bit
   html = html.replaceAll(/<p class=\"[c0-9\ ]+\"><span class=\"[c0-9\ ]+\"><\/span>/g, "<br>");
   var start = html.search("<body");
   var end = html.search("</body>");
   html = html.substr(start, (end-start+7));
-
+  
   return html;
 }
 
@@ -185,7 +191,7 @@ function parseMessage(msg, sermon_name, worship_name) {
     'admin_name': CONFIGURATION['ADMINS'][0][1],
     'admin_email': CONFIGURATION['ADMINS'][0][2]
   };
-
+  
   match = [...msg.matchAll(/\${([a-zA-Z_]+)}/g)];
   for (m of match) {
     if (m[1] in msg_keywords) {
@@ -300,7 +306,7 @@ function weeksInBetween(early, late) {
       d = new Date(year, month, day--);
       week = getWeekNumber(d)[1];
     } while (week == 1);
-  
+    
     return week;
   }
   
@@ -331,7 +337,7 @@ var NOTI_TIME_DELTA = -1;
 function isSpamming(spapp) {
   var today = new Date();
   var cache = spapp.getSheetByName("cache");
-
+  
   // hour out of range
   var lhour = new Date(
     today.getFullYear(), today.getMonth(), today.getDate(),
@@ -349,7 +355,7 @@ function isSpamming(spapp) {
     var value = cache.getRange("!A2:B2").getValues();    
     var time = new Date(value[0][1]);
     NOTI_TIME_DELTA = weeksInBetween(time, today);
-
+    
     // interval too short, must wait for enough weeks
     if (NOTI_TIME_DELTA < CONFIGURATION['NOTI_MIN_INTERVAL'])
       return true;
