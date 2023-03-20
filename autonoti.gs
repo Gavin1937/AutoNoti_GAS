@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2023.03.13.v01
+  Version: 2023.03.20.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -103,7 +103,7 @@ function autonoti() {
     );
   }
   else {
-    throw new Error(`Failed to send sermon email. (sermon_info=${sermon_info}, sermon_msg=${sermon_msg}`);
+    Logger.log('No sermon info & msg');
   }
   
   // worship
@@ -116,7 +116,7 @@ function autonoti() {
     );
   }
   else {
-    throw new Error(`Failed to send worship email. (worship_info=${worship_info}, worship_msg=${worship_msg}`);
+    Logger.log('No worship info & msg');
   }
   
   // admin
