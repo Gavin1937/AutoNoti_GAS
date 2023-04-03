@@ -2,7 +2,7 @@
   AutoNoti_GAS: Automatically Send Scheduled Notification with Google Apps Script.
   Author: Gavin1937
   GitHub: https://github.com/Gavin1937/AutoNoti_GAS
-  Version: 2023.03.20.v01
+  Version: 2023.04.03.v01
 */
 
 // All the columns are counting start from 0 instead of 1 
@@ -70,8 +70,6 @@ function autonoti() {
     throw Error("Cannot find weekly people.");
   var sermon_info = getContactInfo(spapp, cur_ppl[1]);
   var worship_info = getContactInfo(spapp, cur_ppl[2]);
-  if (!isValidInfo(sermon_info) && !isValidInfo(worship_info))
-    throw Error("Cannot find weekly people.");
   Logger.log(`sermon_info = [${sermon_info}]`);
   Logger.log(`worship_info = [${worship_info}]`);
   
